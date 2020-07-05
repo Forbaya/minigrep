@@ -9,13 +9,20 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("Not enough arguments.");
-        }
+    pub fn new(mut args: env::Args) -> Result<Config, &'static str>
+    {
+        args.next();
 
-        let query = args[1].clone();
-        let filename = args[2].clone();
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a query string"),
+        };
+
+        let filename = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a filename"),
+        };
+
         let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
 
         Ok(Config { query, filename, case_sensitive })
@@ -69,27 +76,6 @@ pub fn search_case_insensitive<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn new_config_not_enough_arguments_err() {
-        let args = [String::from("minigrep")];
-        let config = Config::new(&args);
-
-        assert!(config.is_err(), "Not enough arguments.");
-    }
-
-    #[test]
-    fn new_config_is_ok() {
-        let args = [
-            String::from("minigrep"),
-            String::from("search"),
-            String::from("poem.txt")
-        ];
-
-        let config = Config::new(&args);
-
-        assert_eq!(config.is_ok(), true);
-    }
 
     #[test]
     fn case_sensitive() {
